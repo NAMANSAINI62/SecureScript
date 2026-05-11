@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      # Enable local Whisper transcription inside the container by uncommenting:
+      # - WHISPER_LOCAL=1
+      # - WHISPER_MODEL=small
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+    restart: unless-stopped

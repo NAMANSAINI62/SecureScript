@@ -50,6 +50,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // Enable/disable buttons based on transcript content
     updateButtonStates();
 });
+
+async function parseApiResponse(response) {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+        return await response.json();
+    }
+    const text = await response.text();
+    return { error: `Server returned non-JSON response (${response.status}).`, raw: text };
+}
+
+function getApiErrorMessage(response, data, fallbackMessage) {
+    if (data && typeof data.error === 'string' && data.error.trim()) {
+        return data.error;
+    }
+    return `${fallbackMessage} (HTTP ${response.status})`;
+}
+
+function getUserTierHeaderValue() {
+    const el = document.getElementById('userTierSelect');
+    return (el && typeof el.value === 'string' && el.value.trim()) ? el.value.trim() : 'free';
+}
+
 function setupEventListeners() {
     recordButton.addEventListener('click', toggleRecording);
     uploadArea.addEventListener('click', () => audioFileInput.click());
@@ -354,27 +376,16 @@ async function transcribeAudio() {
         const response = await fetch('/api/transcribe', {
             method: 'POST',
             headers: {
-                'X-User-Tier': document.getElementById('userTierSelect').value
+                'X-User-Tier': getUserTierHeaderValue()
             },
             body: formData
         });
 
-        let data;
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-            data = await response.json();
-        } else {
-            console.error("Server returned non-JSON response");
-            throw new Error(`Server returned error (${response.status})`);
-        }
-        
-        if (!response.ok) {
-            // Prioritize the server's error message (e.g., rate limit violation)
-            throw new Error(data.error || 'Transcription failed');
-        }
+        const data = await parseApiResponse(response);
 
-        // Success - update UI
-            originalTranscript.value = data.original_transcript;
+        if (response.ok) {
+            // Success - update UI
+            originalTranscript.value = data.original_transcript || '';
             currentRecordingId = data.recording_id;
 
             // Update word count
@@ -386,10 +397,14 @@ async function transcribeAudio() {
             // Refresh history
             loadRecordingHistory();
 
-            showToast('Transcription complete!', 'success');
+            if (data.warning) {
+                showToast(data.warning, 'info');
+            } else {
+                showToast('Transcription complete!', 'success');
+            }
         } else {
             // Error from server
-            throw new Error(data.error || 'Transcription failed');
+            throw new Error(getApiErrorMessage(response, data, 'Transcription failed'));
         }
 
     } catch (error) {
@@ -418,7 +433,7 @@ async function cleanTranscript() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-Tier': document.getElementById('userTierSelect').value
+                'X-User-Tier': getUserTierHeaderValue()
             },
             body: JSON.stringify({
                 text: text,
@@ -427,16 +442,17 @@ async function cleanTranscript() {
             })
         });
 
-        const data = await response.json().catch(() => ({}));
+        const data = await parseApiResponse(response);
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Cleaning failed');
+        if (response.ok) {
+            cleanedTranscript.value = data.cleaned_transcript;
+            updateWordCount(cleanedTranscript, cleanedWordCount);
+            updateButtonStates();
+            const engineUsed = data.engine_used || 'AI';
+            showToast(`Cleaned with ${engineUsed}!`, 'success');
+        } else {
+            throw new Error(getApiErrorMessage(response, data, 'Cleaning failed'));
         }
-
-        cleanedTranscript.value = data.cleaned_transcript;
-        updateWordCount(cleanedTranscript, cleanedWordCount);
-        updateButtonStates();
-        showToast(`Cleaned with ${data.engine_used}!`, 'success');
 
     } catch (error) {
         console.error('Cleaning error:', error);
@@ -474,9 +490,9 @@ async function generateSummary() {
     try {
         const response = await fetch('/api/summary', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'X-User-Tier': document.getElementById('userTierSelect').value
+                'X-User-Tier': getUserTierHeaderValue()
             },
             body: JSON.stringify({
                 transcript: transcript,
@@ -484,14 +500,14 @@ async function generateSummary() {
             })
         });
 
-        const data = await response.json().catch(() => ({}));
+        const data = await parseApiResponse(response);
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Summary failed');
+        if (response.ok) {
+            displaySummary(data);
+            showToast('Summary generated!', 'success');
+        } else {
+            throw new Error(getApiErrorMessage(response, data, 'Summary failed'));
         }
-
-        displaySummary(data);
-        showToast('Summary generated!', 'success');
 
     } catch (error) {
         console.error('Summary error:', error);
@@ -549,9 +565,9 @@ async function askQuestion() {
     try {
         const response = await fetch('/api/ask', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'X-User-Tier': document.getElementById('userTierSelect').value
+                'X-User-Tier': getUserTierHeaderValue()
             },
             body: JSON.stringify({
                 question: question,
@@ -560,7 +576,7 @@ async function askQuestion() {
             })
         });
 
-        const data = await response.json();
+        const data = await parseApiResponse(response);
 
         if (response.ok) {
             // Display answer
@@ -575,7 +591,7 @@ async function askQuestion() {
 
             showToast('Answer received!', 'success');
         } else {
-            throw new Error(data.error || 'Q&A failed');
+            throw new Error(getApiErrorMessage(response, data, 'Q&A failed'));
         }
 
     } catch (error) {
@@ -616,9 +632,9 @@ async function getLearningTips() {
     try {
         const response = await fetch('/api/learn', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'X-User-Tier': document.getElementById('userTierSelect').value
+                'X-User-Tier': getUserTierHeaderValue()
             },
             body: JSON.stringify({
                 transcript: transcript,
@@ -626,13 +642,13 @@ async function getLearningTips() {
             })
         });
 
-        const data = await response.json();
+        const data = await parseApiResponse(response);
 
         if (response.ok) {
             displayLearningResults(data);
             showToast('Learning suggestions ready!', 'success');
         } else {
-            throw new Error(data.error || 'Learning tips failed');
+            throw new Error(getApiErrorMessage(response, data, 'Learning tips failed'));
         }
 
     } catch (error) {
@@ -694,14 +710,17 @@ function switchTab(tabName) {
 async function loadRecordingHistory() {
     try {
         const response = await fetch('/api/recordings');
-        const data = await response.json();
+        const data = await parseApiResponse(response);
 
         if (response.ok) {
             displayRecordingHistory(data.recordings || []);
+        } else {
+            throw new Error(getApiErrorMessage(response, data, 'Failed to load history'));
         }
 
     } catch (error) {
         console.error('Error loading history:', error);
+        showToast(error.message || 'Error loading history', 'error');
     }
 }
 
@@ -718,14 +737,21 @@ function displayRecordingHistory(recordings) {
         item.className = 'history-item';
         item.dataset.id = rec.id;
 
-        const date = new Date(rec.created_at.replace(' ', 'T') + 'Z');
-        const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const date = rec.created_at ? new Date(rec.created_at) : null;
+        const dateStr = (date && !Number.isNaN(date.getTime()))
+            ? (date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+            : 'Unknown time';
+
+        const dur = typeof rec.duration_seconds === 'number' ? rec.duration_seconds : parseFloat(rec.duration_seconds);
+        const durStr = (!Number.isNaN(dur) && dur > 0)
+            ? `${Math.floor(dur / 60)}:${String(Math.floor(dur % 60)).padStart(2, '0')}`
+            : '';
 
         item.innerHTML = `
             <span class="history-item-icon">🎙️</span>
             <div class="history-item-info">
                 <div class="history-item-name">${escapeHtml(rec.filename)}</div>
-                <div class="history-item-date">${dateStr}</div>
+                <div class="history-item-date">${dateStr}${durStr ? ` • ${durStr}` : ''}</div>
             </div>
             <div class="history-item-actions">
                 <button class="btn-small play-btn" title="Play">▶️</button>
@@ -841,7 +867,7 @@ async function performDelete(recordingId) {
             }
         } else {
             // Revert changes if failed (simple reload for now)
-            const data = await response.json();
+            const data = await parseApiResponse(response);
             throw new Error(data.error || 'Delete failed');
         }
 

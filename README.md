@@ -53,22 +53,29 @@ cd "c:\Super AI Transcript"
 python app.py
 ```
 
-Open http://127.0.0.1:7860 in your browser (or set `PORT` to use a different port locally).
+Open http://127.0.0.1:5000 in your browser (change `PORT` in `.env` if you use another port).
 
-### Optional: Run with Docker
+### Hugging Face Spaces (Docker)
 
-Build and run the container (Windows example shown):
+This repo is meant to deploy as a **Docker Space**. The platform sets `PORT` (often `7860`); the app reads it automatically.
+
+1. Create a Space with SDK **Docker** and connect this GitHub repo (or push with the included GitHub Action).
+2. In the Space **Settings → Variables and secrets**, add at least `GEMINI_API_KEY` if you want AI cleaning/summary/Q&A. Optional: `DB_*` if you attach an external MySQL reachable from the Space.
+3. Without MySQL, the UI still loads; **recording history** can fall back to the shipped export under `backups/mysql_recordings_export/` when the database is unavailable.
+
+Space URL pattern: `https://huggingface.co/spaces/<your-username>/<space-name>`
+
+### Optional: Run with Docker (local)
 
 ```bash
 docker build -t super-ai-transcript .
-docker run -p 7860:7860 --rm -v %cd%:/app -v %cd%/uploads:/app/uploads super-ai-transcript
+docker run -p 5000:5000 --rm -v %cd%:/app -v %cd%/uploads:/app/uploads super-ai-transcript
 ```
 
-To enable local Whisper transcription inside Docker (this increases image size), set environment variables when running:
+With Whisper inside the container (larger image):
 
 ```bash
-# enable Whisper local mode and pick model: tiny|base|small|medium|large
-docker run -p 7860:7860 -e WHISPER_LOCAL=1 -e WHISPER_MODEL=small --rm -v %cd%:/app -v %cd%/uploads:/app/uploads super-ai-transcript
+docker run -p 5000:5000 -e WHISPER_LOCAL=1 -e WHISPER_MODEL=small --rm -v %cd%:/app -v %cd%/uploads:/app/uploads super-ai-transcript
 ```
 
 ## Project Structure
@@ -84,6 +91,7 @@ Super AI Transcript/
 ├── static/
 │   ├── script.js    # Frontend JavaScript
 │   └── styles.css   # CSS styling
+├── backups/         # Optional: exported history for Space fallback
 └── uploads/         # Temporary audio files
 ```
 

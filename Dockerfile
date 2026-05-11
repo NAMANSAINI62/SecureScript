@@ -34,5 +34,6 @@ ENV FLASK_RUN_HOST=0.0.0.0
 # To enable local Whisper transcription set environment variable WHISPER_LOCAL=1
 # and optionally WHISPER_MODEL (tiny, base, small, medium, large).
 
-EXPOSE 7860
+# Local Docker default is PORT=5000; Hugging Face Spaces sets PORT (often 7860).
+EXPOSE 5000
 CMD ["python", "app.py"]

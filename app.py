@@ -42,14 +42,6 @@ except Exception:
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin requests
 
-# Initialize DB at import time so production servers (e.g., gunicorn on Railway)
-# don't skip setup by bypassing the __main__ block.
-try:
-    init_db()
-except Exception as db_error:
-    print(f"⚠️ Database init skipped during startup: {db_error}")
-    print("⚠️ App will run, but DB-backed history features may fail until DB is configured.")
-
 # Simple configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -537,9 +529,16 @@ if __name__ == '__main__':
     print("🚀 Starting Super AI Transcript Server (Whisper-only)...")
     print("=" * 60)
 
-    # Start Flask app
+    # MySQL may be absent on Hugging Face Spaces; do not crash the whole app.
+    try:
+        init_db()
+    except Exception as db_error:
+        print(f"⚠️ Database init skipped: {db_error}")
+        print("⚠️ Recording history uses MySQL when available, or backup export on Space.")
+
+    # Start Flask app (Spaces set PORT, e.g. 7860; local default 5000)
     app.run(
         debug=True,
         host='0.0.0.0',  # Allow connections from any IP
-        port=int(os.environ.get('PORT', 7860))
+        port=int(os.environ.get('PORT', 5000))
     )

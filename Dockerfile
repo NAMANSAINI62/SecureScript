@@ -1,36 +1,38 @@
-# Use Python 3.9 as base image
-FROM python:3.9-slim
+# Beginner-friendly Dockerfile for Super AI Transcript
+# Uses Python slim base, installs ffmpeg and Python deps
 
-# Install system dependencies (FFmpeg is required for Whisper)
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+FROM python:3.11.13-slim-bullseye
 
-# Set working directory
+# Install system dependencies (ffmpeg for audio processing)
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+     && apt-get install -y --no-install-recommends \
+         ffmpeg \
+         build-essential \
+         libsndfile1 \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/*
+
+# Set workdir
 WORKDIR /app
 
-# Copy requirements first (for caching)
-COPY requirements.txt .
+# Copy requirements and install
+COPY requirements.txt /app/requirements.txt
+RUN python -m pip install --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r /app/requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy application
+COPY . /app
 
-# Copy the rest of the application
-COPY . .
+# Create uploads dir
+RUN mkdir -p /app/uploads
 
-# Create necessary directories and set permissions
-# Hugging Face Spaces runs as user 1000 by default
-RUN mkdir -p uploads && \
-    chmod 777 uploads && \
-    touch super_ai_transcript.db && \
-    chmod 777 super_ai_transcript.db && \
-    chmod 777 /app
+ENV FLASK_APP=app.py
+ENV FLASK_RUN_HOST=0.0.0.0
 
-# Expose the standard Hugging Face port
+# Default: do NOT enable Whisper local mode to keep image smaller.
+# To enable local Whisper transcription set environment variable WHISPER_LOCAL=1
+# and optionally WHISPER_MODEL (tiny, base, small, medium, large).
+
 EXPOSE 7860
-
-# Set environment variable to tell Flask to use port 7860
-ENV PORT=7860
-
-# Command to run the application
 CMD ["python", "app.py"]

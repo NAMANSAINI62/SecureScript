@@ -35,5 +35,5 @@ ENV FLASK_RUN_HOST=0.0.0.0
 # and optionally WHISPER_MODEL (tiny, base, small, medium, large).
 
 # Local Docker default is PORT=5000; Hugging Face Spaces sets PORT (often 7860).
-EXPOSE 5000
+EXPOSE 7860
 CMD ["python", "app.py"]

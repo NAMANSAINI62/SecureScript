@@ -15,6 +15,8 @@ __pycache__/
 
 # Database
 *.db
+*.db.*
+recovery.sql
 
 # User Uploads
 uploads/

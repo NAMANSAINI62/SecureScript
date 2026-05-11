@@ -1,10 +1,9 @@
-# Virtual Environment
+# Virtual Environment (whole folder; avoid ignoring repo `scripts/` on Windows)
 venv/
-bin/
-Include/
-Lib/
-Scripts/
 pyvenv.cfg
+
+# Stray local folder at repo root (Windows / tooling)
+/bin/
 
 # Python
 __pycache__/

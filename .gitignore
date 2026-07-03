@@ -1,0 +1,31 @@
+# Virtual Environment (whole folder; avoid ignoring repo `scripts/` on Windows)
+venv/
+.venv/
+pyvenv.cfg
+
+# Stray local folder at repo root (Windows / tooling)
+/bin/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables
+.env
+
+# Database
+*.db
+*.db.*
+recovery.sql
+!seed/super_ai_transcript.sqlite
+
+# User Uploads
+uploads/
+
+# Backup exports (large/binary)
+backups/mysql_recordings_export/
+
+# OS specific files
+.DS_Store
+Thumbs.db

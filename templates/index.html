@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super AI Transcript</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ Super AI Transcript</h1>
+            <p>Record audio, get transcript, and ask AI questions using Ollama</p>
+        </header>
+
+        <section class="card record-card">
+            <h2>🎤 Record Audio</h2>
+            <div class="record-center">
+                <div class="record-btn-wrap">
+                    <div class="record-pulse" id="recordPulse"></div>
+                    <button id="recordButton" class="btn btn-record" data-recording="false">
+                        <span class="btn-icon" id="recordIcon">⏺</span>
+                        <span class="btn-text">Start Recording</span>
+                    </button>
+                </div>
+                <div id="recordingTimer" class="timer-pill hidden">
+                    <span class="timer-dot"></span>
+                    <strong id="timerDisplay">00:00</strong>
+                </div>
+            </div>
+            <div class="visualizer-wrap hidden" id="visualizerWrap">
+                <canvas id="audioVisualizer" width="500" height="64"></canvas>
+            </div>
+            <div class="record-footer">
+                <button id="transcribeButton" class="btn btn-accent hidden" disabled>
+                    ✨ Transcribe Audio
+                </button>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>📝 Transcripts</h2>
+            <div class="transcripts-grid">
+                <div>
+                    <label for="originalTranscript">Original Transcript <span class="badge">Raw</span></label>
+                    <textarea id="originalTranscript" placeholder="Transcript will appear here after recording." rows="8" readonly></textarea>
+                    <small id="originalWordCount">0 words</small>
+                </div>
+                <div>
+                    <label for="cleanedTranscript">Cleaned Transcript <span class="badge-success">AI Enhanced</span></label>
+                    <textarea id="cleanedTranscript" placeholder="Cleaned transcript will appear here after processing." rows="8" readonly></textarea>
+                    <small id="cleanedWordCount">0 words</small>
+                    <button id="copyCleanedBtn" class="btn btn-small">📋 Copy</button>
+                </div>
+            </div>
+            <div style="margin-top: 10px;">
+                <button id="cleanButton" class="btn btn-primary" disabled>✨ Clean Transcript</button>
+            </div>
+        </section>
+
+        <section id="improvementReportCard" class="card hidden">
+            <h2>📊 English Improvement &amp; Assessment Report</h2>
+
+            <div class="report-grid">
+                <div class="report-col">
+                    <div class="report-box">
+                        <h3>✍️ Corrected Transcript</h3>
+                        <p id="rptCorrected" class="report-text"></p>
+                    </div>
+                    <div class="report-box">
+                        <h3>🌟 Improved English (Native Level)</h3>
+                        <p id="rptImproved" class="report-text highlight"></p>
+                    </div>
+                </div>
+                <div class="report-col">
+                    <div class="report-box">
+                        <h3>📈 English Assessment</h3>
+                        <div class="score-row"><span>Grammar</span><strong id="rptGrammarScore">0/100</strong></div>
+                        <div class="progress-bar"><div id="rptGrammarBar" class="progress-fill" style="width:0%"></div></div>
+                        <div class="score-row"><span>Vocabulary</span><strong id="rptVocabScore">0/100</strong></div>
+                        <div class="progress-bar"><div id="rptVocabBar" class="progress-fill" style="width:0%"></div></div>
+                        <div class="score-row"><span>Fluency</span><strong id="rptFluencyScore">0/100</strong></div>
+                        <div class="progress-bar"><div id="rptFluencyBar" class="progress-fill" style="width:0%"></div></div>
+                        <div class="score-row"><span>Pronunciation Likelihood</span><strong id="rptPronScore">0/100</strong></div>
+                        <div class="progress-bar"><div id="rptPronBar" class="progress-fill" style="width:0%"></div></div>
+                        <div class="overall-box">
+                            <div class="score-row"><span>Overall Score</span><strong id="rptOverallScore">0/100</strong></div>
+                            <div class="score-row"><span>English Level</span><span id="rptLevel" class="badge-success">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-box" style="margin-top:16px;">
+                <h3>🗣️ Speaking Practice Version</h3>
+                <p id="rptSpeaking" class="practice-box"></p>
+            </div>
+
+            <div class="report-grid" style="margin-top:16px;">
+                <div class="report-col">
+                    <div class="report-box">
+                        <h3>🔍 Corrections Explained</h3>
+                        <ul id="rptExplanations" class="report-list"></ul>
+                    </div>
+                    <div class="report-box">
+                        <h3>💡 Vocabulary Upgrades</h3>
+                        <table class="vocab-table"><tbody id="rptVocabTable"></tbody></table>
+                    </div>
+                </div>
+                <div class="report-col">
+                    <div class="report-box">
+                        <h3>📋 Personalized Improvement Plan</h3>
+                        <h4>Grammar</h4>
+                        <ul id="rptAdviceGrammar" class="report-list"></ul>
+                        <h4>Vocabulary</h4>
+                        <ul id="rptAdviceVocab" class="report-list"></ul>
+                        <h4>Speaking</h4>
+                        <ul id="rptAdviceSpeaking" class="report-list"></ul>
+                        <h4>Daily Exercise</h4>
+                        <p id="rptExercise" class="exercise-box"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <div id="loadingOverlay" class="hidden loading-overlay">
+            <div>
+                <div class="spinner"></div>
+                <p id="loadingText">Processing...</p>
+            </div>
+        </div>
+
+        <div id="toastContainer" class="toast-container"></div>
+
+        <footer>
+            <p>Super AI Transcript &copy; 2025 | Powered by Ollama &amp; Whisper</p>
+        </footer>
+    </div>
+    <script src="/static/script.js" defer></script>
+</body>
+</html>

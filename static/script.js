@@ -221,6 +221,7 @@ async function cleanTranscript() {
         return;
     }
     cleanButton.disabled = true;
+    showLoading('Analyzing & cleaning transcript with AI...');
     try {
         const response = await fetch('/api/clean', {
             method: 'POST',
@@ -242,6 +243,7 @@ async function cleanTranscript() {
         showToast('Error: ' + error.message, 'error');
     } finally {
         cleanButton.disabled = false;
+        hideLoading();
     }
 }
 

@@ -47,9 +47,10 @@ def call_ollama(prompt: str, model_name: str = "llama3") -> str:
                 "model": model_name,
                 "prompt": prompt,
                 "stream": False,
+                "keep_alive": "1h",
                 "options": {
                     "temperature": 0.1,
-                    "num_ctx": 2048,
+                    "num_ctx": 512,
                     "top_k": 20,
                     "top_p": 0.9
                 }

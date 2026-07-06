@@ -13,19 +13,3 @@ __pycache__/
 
 # Environment Variables
 .env
-
-# Database
-*.db
-*.db.*
-recovery.sql
-!seed/super_ai_transcript.sqlite
-
-# User Uploads
-uploads/
-
-# Backup exports (large/binary)
-backups/mysql_recordings_export/
-
-# OS specific files
-.DS_Store
-Thumbs.db

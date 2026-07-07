@@ -7,93 +7,191 @@ sdk: docker
 pinned: false
 ---
 
-# Super AI Transcript 🎙️
+# Super AI Transcript
 
-A full-stack web application for audio transcription, AI-powered text cleaning, smart summarization, Q&A, and learning suggestions.
+Super AI Transcript is a modern AI-powered speech practice app that records audio, transcribes speech with Whisper, and turns the result into an English improvement report using a local Ollama model.
 
-## Features
+It is built for learners who want more than a transcript: corrected English, improved phrasing, speaking practice, vocabulary upgrades, assessment scores, and a simple daily improvement plan.
 
-- 🎤 **Browser Recording** - Record audio directly in the browser using MediaRecorder API
-- 📁 **File Upload** - Upload audio files (MP3, WAV, M4A, WebM, OGG)
-- 📝 **Speech-to-Text** - Convert audio to text using OpenAI Whisper (local)
-- ✨ **AI Cleaning** - Fix grammar and punctuation using Google Gemini (optional)
-- 📊 **Smart Summary** - Extract title, key points, action items
-- 💬 **Q&A on Transcript** - Ask questions about your recordings
-- 📚 **Learning Suggestions** - Get better phrases, resources, and roadmaps
-- 💾 **SQLite Storage** - Save recordings for future playback and analysis
+## Live Proof
+
+These screenshots show the real application flow: recording, transcription, cleaning, assessment, and improvement feedback.
+
+### Recording And Transcript Workspace
+
+![Super AI Transcript recording and transcript workspace](docs/screenshots/01-transcript-workspace.png)
+
+### Recording In Progress
+
+![Super AI Transcript recording in progress with waveform](docs/screenshots/02-recording-in-progress.png)
+
+### English Improvement Report
+
+![Super AI Transcript English improvement assessment report](docs/screenshots/03-english-report.png)
+
+### Speaking Practice And Learning Plan
+
+![Super AI Transcript speaking practice and improvement plan](docs/screenshots/04-speaking-practice-plan.png)
+
+### Full Desktop View
+
+![Super AI Transcript full desktop interface](docs/screenshots/05-full-desktop-view.png)
+
+## Core Features
+
+- **Browser audio recording** with a clean start and stop flow.
+- **Live recording feedback** with timer and waveform-style visual display.
+- **Speech-to-text transcription** powered by local OpenAI Whisper.
+- **AI transcript cleaning** through a local Ollama model.
+- **Corrected transcript** that preserves the original meaning.
+- **Improved English version** rewritten in clearer, more natural language.
+- **English assessment report** with grammar, vocabulary, fluency, pronunciation likelihood, overall score, and level.
+- **Speaking practice version** for pronunciation and fluency training.
+- **Corrections explained** in a learner-friendly format.
+- **Vocabulary upgrades** and a personalized improvement plan.
+
+## How It Works
+
+1. Record audio directly in the browser.
+2. Send the audio file to the Flask backend.
+3. Transcribe the audio locally with Whisper.
+4. Review the original transcript.
+5. Clean and improve the transcript with Ollama.
+6. Generate an English learning report with scores, corrections, and practice advice.
 
 ## Tech Stack
 
-- **Frontend**: HTML, CSS, JavaScript
-- **Backend**: Python, Flask
-- **Database**: SQLite
-- **AI APIs**: Google Gemini (optional), OpenAI Whisper (local)
-- **Audio decode**: FFmpeg
+| Layer | Technology |
+| --- | --- |
+| Frontend | HTML, CSS, JavaScript |
+| Backend | Python, Flask, Flask-CORS |
+| Transcription | OpenAI Whisper |
+| AI feedback | Ollama local model |
+| Audio processing | FFmpeg |
+| Deployment | Docker, Docker Compose, Hugging Face Spaces metadata |
 
-## Setup Instructions
+## Requirements
 
-### Prerequisites
+- Python 3.8+
+- FFmpeg installed and available on your system `PATH`
+- Ollama installed and running locally
+- An Ollama model such as `phi3` or `llama3`
 
-1. **Python 3.8+** - [Download](https://www.python.org/downloads/)
-2. **FFmpeg** (required for Whisper) - [Download](https://ffmpeg.org/download.html)
+## Quick Start
 
-### Step 1: Install Python Dependencies
+Install dependencies:
 
 ```bash
-cd "d:\Super AI Transcript"
 pip install -r requirements.txt
 ```
 
-### Step 2: Configure Environment Variables
-
-Copy `.env.example` to `.env` and update:
-
-```env
-GEMINI_API_KEY=your-gemini-api-key
-WHISPER_MODEL=tiny
-```
-
-### Step 3: Run the Application
+Create the environment file:
 
 ```bash
-cd "d:\Super AI Transcript"
+copy .env.example .env
+```
+
+Pull an Ollama model:
+
+```bash
+ollama pull phi3
+```
+
+Start Ollama:
+
+```bash
+ollama serve
+```
+
+Run the Flask app:
+
+```bash
 python app.py
 ```
 
-Open http://127.0.0.1:5000 in your browser.
+Open the app:
 
-## Project Structure
+```text
+http://127.0.0.1:5000
+```
 
+## Docker
+
+Build and run the app with Docker Compose:
+
+```bash
+docker compose up --build
 ```
-Super AI Transcript/
-├── app.py                  # Flask backend (all routes)
-├── database.py             # SQLite operations
-├── templates/
-│   └── index.html          # Main UI
-├── static/
-│   ├── script.js           # Frontend JavaScript
-│   └── styles.css          # CSS styling
-├── uploads/                # Temp audio files
-├── requirements.txt        # Python dependencies
-├── .env                    # API keys (secret!)
-├── super_ai_transcript.db  # SQLite Database File
-└── README.md               # This file
+
+Then open:
+
+```text
+http://127.0.0.1:5000
 ```
+
+## Environment Variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `5000` | Flask server port |
+| `OLLAMA_MODEL` | `phi3` | Local Ollama model used for transcript improvement |
+| `PERSIST_DATA_DIR` | project folder | Optional persistent data directory |
+| `WHISPER_MODEL` | `small` in `.env.example` | Intended Whisper model setting |
+| `GEMINI_API_KEY` | empty | Present in the template, not required by the current app code |
+
+> Current note: `app.py` loads Whisper with the `small` model constant.
 
 ## API Endpoints
 
 | Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Main page |
-| `/api/transcribe` | POST | Transcribe audio |
-| `/api/clean` | POST | Clean transcript with AI |
-| `/api/summary` | POST | Generate summary |
-| `/api/ask` | POST | Q&A on transcript |
-| `/api/learn` | POST | Learning suggestions |
-| `/api/recordings` | GET | List all recordings |
-| `/api/recordings/<id>/audio` | GET | Stream audio |
-| `/api/recordings/<id>` | DELETE | Delete recording |
+| --- | --- | --- |
+| `/` | `GET` | Serves the main app interface |
+| `/api/preload` | `POST` | Warms up Whisper and Ollama in the background |
+| `/api/transcribe` | `POST` | Uploads audio and returns the original transcript |
+| `/api/clean` | `POST` | Cleans transcript text and returns the English improvement report |
+
+### Transcribe Audio
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/transcribe ^
+  -F "audio=@sample.webm"
+```
+
+### Clean Transcript
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/clean ^
+  -H "Content-Type: application/json" ^
+  -d "{\"text\":\"hello my name is naman and i want improve english\"}"
+```
+
+## Project Structure
+
+```text
+Super AI Transcript/
+├── app.py
+├── templates/
+│   └── index.html
+├── static/
+│   ├── script.js
+│   └── styles.css
+├── docs/
+│   └── screenshots/
+├── uploads/
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+## Notes
+
+- FFmpeg is required for Whisper audio processing.
+- Ollama must be running for full AI feedback.
+- If Ollama is offline, the app returns a basic fallback learning report.
+- Uploaded audio files are removed after transcription.
 
 ## License
 
-MIT License - Free to use and modify.
+MIT License. Free to use, modify, and build on.

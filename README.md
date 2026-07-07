@@ -13,30 +13,6 @@ Super AI Transcript is a modern AI-powered speech practice app that records audi
 
 It is built for learners who want more than a transcript: corrected English, improved phrasing, speaking practice, vocabulary upgrades, assessment scores, and a simple daily improvement plan.
 
-## Live Proof
-
-These screenshots show the real application flow: recording, transcription, cleaning, assessment, and improvement feedback.
-
-### Recording And Transcript Workspace
-
-![Super AI Transcript recording and transcript workspace](docs/screenshots/01-transcript-workspace.png)
-
-### Recording In Progress
-
-![Super AI Transcript recording in progress with waveform](docs/screenshots/02-recording-in-progress.png)
-
-### English Improvement Report
-
-![Super AI Transcript English improvement assessment report](docs/screenshots/03-english-report.png)
-
-### Speaking Practice And Learning Plan
-
-![Super AI Transcript speaking practice and improvement plan](docs/screenshots/04-speaking-practice-plan.png)
-
-### Full Desktop View
-
-![Super AI Transcript full desktop interface](docs/screenshots/05-full-desktop-view.png)
-
 ## Core Features
 
 - **Browser audio recording** with a clean start and stop flow.

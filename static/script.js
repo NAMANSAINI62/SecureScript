@@ -10,8 +10,6 @@ const recordButton = document.getElementById('recordButton');
 const recordPulse = document.getElementById('recordPulse');
 const recordingTimer = document.getElementById('recordingTimer');
 const timerDisplay = document.getElementById('timerDisplay');
-const audioVisualizer = document.getElementById('audioVisualizer');
-const visualizerWrap = document.getElementById('visualizerWrap');
 const transcribeButton = document.getElementById('transcribeButton');
 const originalTranscript = document.getElementById('originalTranscript');
 const cleanedTranscript = document.getElementById('cleanedTranscript');
@@ -101,7 +99,6 @@ async function startRecording() {
         recordingTimer.classList.remove('hidden');
         timerInterval = setInterval(updateRecordingTimer, 1000);
 
-        setupAudioVisualization(stream);
         showToast('Recording started...', 'info');
 
     } catch (error) {
@@ -126,7 +123,6 @@ function stopRecording() {
     recordButton.classList.remove('recording');
     recordPulse.classList.remove('active');
     clearInterval(timerInterval);
-    visualizerWrap.classList.add('hidden');
 }
 
 async function handleRecordingComplete() {
@@ -144,49 +140,6 @@ function updateRecordingTimer() {
     timerDisplay.textContent = `${minutes}:${seconds}`;
 }
 
-function setupAudioVisualization(stream) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    const source = audioContext.createMediaStreamSource(stream);
-    source.connect(analyser);
-    visualizerWrap.classList.remove('hidden');
-    drawVisualization();
-}
-
-function drawVisualization() {
-    if (!analyser) return;
-    const canvas = audioVisualizer;
-    const ctx = canvas.getContext('2d');
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    function draw() {
-        if (recordButton.dataset.recording !== 'true') return;
-        requestAnimationFrame(draw);
-        analyser.getByteFrequencyData(dataArray);
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const barWidth = Math.max(2, (canvas.width / bufferLength) * 2);
-        const gap = 2;
-        let x = 0;
-        for (let i = 0; i < bufferLength; i++) {
-            const ratio = dataArray[i] / 255;
-            const barHeight = ratio * canvas.height;
-            // Gradient color per bar from purple to pink based on amplitude
-            const r = Math.round(102 + ratio * 143);
-            const g = Math.round(126 - ratio * 89);
-            const b = Math.round(234 - ratio * 120);
-            ctx.fillStyle = `rgb(${r},${g},${b})`;
-            // Draw bar from bottom center
-            ctx.beginPath();
-            ctx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, 2);
-            ctx.fill();
-            x += barWidth + gap;
-        }
-    }
-    draw();
-}
 
 async function transcribeAudio() {
     if (!recordedFile) {
@@ -301,11 +254,15 @@ function parseImprovementReport(text) {
             if (parts.length >= 2) {
                 let key = parts[0].trim().toLowerCase();
                 let val = parts[1].trim();
-                if (key.includes('grammar')) sections.assessment.grammar = val.replace('/100', '').trim();
-                else if (key.includes('vocabulary')) sections.assessment.vocabulary = val.replace('/100', '').trim();
-                else if (key.includes('fluency')) sections.assessment.fluency = val.replace('/100', '').trim();
-                else if (key.includes('pronunciation')) sections.assessment.pronunciation = val.replace('/100', '').trim();
-                else if (key.includes('overall')) sections.assessment.overall = val.replace('/100', '').trim();
+                let extractGrade = (str) => {
+                    // Remove any trailing "/100" if the model accidentally includes it
+                    return str.replace('/100', '').trim();
+                };
+                if (key.includes('grammar')) sections.assessment.grammar = extractGrade(val);
+                else if (key.includes('vocabulary')) sections.assessment.vocabulary = extractGrade(val);
+                else if (key.includes('fluency')) sections.assessment.fluency = extractGrade(val);
+                else if (key.includes('pronunciation')) sections.assessment.pronunciation = extractGrade(val);
+                else if (key.includes('overall')) sections.assessment.overall = extractGrade(val);
                 else if (key.includes('level')) sections.assessment.level = val;
             }
         } else if (currentSection === 'advice') {
@@ -337,15 +294,11 @@ function renderImprovementReport(reportText) {
     document.getElementById('rptCorrected').textContent = report.corrected || 'N/A';
     document.getElementById('rptImproved').textContent = report.improved || 'N/A';
 
-    document.getElementById('rptGrammarScore').textContent = report.assessment.grammar + '/100';
-    document.getElementById('rptGrammarBar').style.width = report.assessment.grammar + '%';
-    document.getElementById('rptVocabScore').textContent = report.assessment.vocabulary + '/100';
-    document.getElementById('rptVocabBar').style.width = report.assessment.vocabulary + '%';
-    document.getElementById('rptFluencyScore').textContent = report.assessment.fluency + '/100';
-    document.getElementById('rptFluencyBar').style.width = report.assessment.fluency + '%';
-    document.getElementById('rptPronScore').textContent = report.assessment.pronunciation + '/100';
-    document.getElementById('rptPronBar').style.width = report.assessment.pronunciation + '%';
-    document.getElementById('rptOverallScore').textContent = report.assessment.overall + '/100';
+    document.getElementById('rptGrammarScore').textContent = report.assessment.grammar;
+    document.getElementById('rptVocabScore').textContent = report.assessment.vocabulary;
+    document.getElementById('rptFluencyScore').textContent = report.assessment.fluency;
+    document.getElementById('rptPronScore').textContent = report.assessment.pronunciation;
+    document.getElementById('rptOverallScore').textContent = report.assessment.overall;
     document.getElementById('rptLevel').textContent = report.assessment.level;
 
     document.getElementById('rptSpeaking').textContent = '💬 "' + (report.speaking || 'N/A') + '"';

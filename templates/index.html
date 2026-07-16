@@ -28,9 +28,7 @@
                     <strong id="timerDisplay">00:00</strong>
                 </div>
             </div>
-            <div class="visualizer-wrap hidden" id="visualizerWrap">
-                <canvas id="audioVisualizer" width="500" height="64"></canvas>
-            </div>
+
             <div class="record-footer">
                 <button id="transcribeButton" class="btn btn-accent hidden" disabled>
                     ✨ Transcribe Audio
@@ -75,16 +73,12 @@
                 <div class="report-col">
                     <div class="report-box">
                         <h3>📈 English Assessment</h3>
-                        <div class="score-row"><span>Grammar</span><strong id="rptGrammarScore">0/100</strong></div>
-                        <div class="progress-bar"><div id="rptGrammarBar" class="progress-fill" style="width:0%"></div></div>
-                        <div class="score-row"><span>Vocabulary</span><strong id="rptVocabScore">0/100</strong></div>
-                        <div class="progress-bar"><div id="rptVocabBar" class="progress-fill" style="width:0%"></div></div>
-                        <div class="score-row"><span>Fluency</span><strong id="rptFluencyScore">0/100</strong></div>
-                        <div class="progress-bar"><div id="rptFluencyBar" class="progress-fill" style="width:0%"></div></div>
-                        <div class="score-row"><span>Pronunciation Likelihood</span><strong id="rptPronScore">0/100</strong></div>
-                        <div class="progress-bar"><div id="rptPronBar" class="progress-fill" style="width:0%"></div></div>
+                        <div class="score-row"><span>Grammar</span><strong id="rptGrammarScore" class="badge">N/A</strong></div>
+                        <div class="score-row"><span>Vocabulary</span><strong id="rptVocabScore" class="badge">N/A</strong></div>
+                        <div class="score-row"><span>Fluency</span><strong id="rptFluencyScore" class="badge">N/A</strong></div>
+                        <div class="score-row"><span>Pronunciation</span><strong id="rptPronScore" class="badge">N/A</strong></div>
                         <div class="overall-box">
-                            <div class="score-row"><span>Overall Score</span><strong id="rptOverallScore">0/100</strong></div>
+                            <div class="score-row"><span>Overall Grade</span><strong id="rptOverallScore" class="badge" style="background:#8b5cf6;color:#fff;">N/A</strong></div>
                             <div class="score-row"><span>English Level</span><span id="rptLevel" class="badge-success">-</span></div>
                         </div>
                     </div>

@@ -11,11 +11,15 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-WHISPER_MODEL_NAME = 'small'
-whisper_model = None
-
 load_dotenv()
 
+import google.generativeai as genai
+
+WHISPER_MODEL_NAME = os.getenv('WHISPER_MODEL', 'tiny')
+whisper_model = None
+
+if os.getenv("GEMINI_API_KEY"):
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 try:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -65,6 +69,18 @@ def call_ollama(prompt: str, model_name: str = "llama3") -> str:
 
 def call_ai(system_prompt: str, user_message: str) -> str:
     full_prompt = f"INSTRUCTIONS: {system_prompt}\n\nUSER INPUT: {user_message}"
+    
+    if os.getenv("GEMINI_API_KEY"):
+        print("Calling Gemini API...")
+        try:
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(full_prompt)
+            if response.text:
+                return response.text.strip()
+        except Exception as e:
+            print(f"Gemini failed: {e}. Falling back to Ollama...")
+
     local_model = os.getenv("OLLAMA_MODEL", "phi3")
     print(f"Calling Ollama model: {local_model}")
     local_response = call_ollama(full_prompt, local_model)
@@ -189,12 +205,13 @@ def clean_text():
         cleaned = call_ai(
             "You are an expert English teacher and language coach. Analyze the user's transcript and generate an English improvement report using these exact steps:\n"
             "STEP 1: Correct the Transcript: Fix speech-to-text errors, spelling, grammar, punctuation, and remove fillers. Preserve original meaning. Do not add new information.\n"
-            "STEP 2: Improve the English: Rewrite in natural, fluent, professional, native-like English.\n"
+            "STEP 2: Improve the English: Rewrite the transcript in highly developed, fluent, professional, native-like English. The improved version MUST be structurally different and better than the original, never exactly the same.\n"
             "STEP 3: Explain Improvements: For each important correction, explain what was wrong, why it was changed, simply for learners.\n"
             "STEP 4: Vocabulary Enhancement: Provide a list of stronger alternatives in the format: Original → Better Alternative.\n"
-            "STEP 5: Speaking Practice Version: Create one fluent, easy-to-pronounce practice sentence.\n"
-            "STEP 6: English Assessment: Rate Grammar, Vocabulary, Fluency, and Pronunciation Likelihood out of 100. Provide Overall Score and Level (Beginner: 0-20, Elementary: 21-40, Intermediate: 41-60, Upper Intermediate: 61-80, Advanced: 81-100).\n"
+            "STEP 5: Speaking Practice Version: Create one highly developed, fluent, easy-to-pronounce practice sentence or short paragraph based on the topic.\n"
+            "STEP 6: English Assessment: Grade Grammar, Vocabulary, Fluency, and Pronunciation Likelihood using descriptive grades (e.g., Excellent, Good, Fair, Needs Work). Provide an Overall Grade (e.g., A, B, C, D) and Level (Beginner, Elementary, Intermediate, Upper Intermediate, Advanced).\n"
             "STEP 7: Personalized Improvement Advice: Top 3 grammar improvements, top 3 vocabulary improvements, top 3 speaking improvements, and one daily exercise.\n\n"
+            "CRITICAL: If the input text is extremely short (under 3 words) or just meaningless filler (e.g. 'You'), DO NOT invent or hallucinate sentences about supermarkets or anything else. Just return the same text for transcript and give 'N/A' or 'Needs Work' grades.\n\n"
             "You MUST format your output exactly as follows with no introductory or concluding chat text:\n"
             "CORRECTED TRANSCRIPT\n[Corrected version]\n\n"
             "IMPROVED ENGLISH\n[Fluent native-level version]\n\n"
@@ -202,11 +219,11 @@ def clean_text():
             "VOCABULARY UPGRADES\n[Original] → [Improved]\n[Original] → [Improved]\n\n"
             "SPEAKING PRACTICE VERSION\n[Practice sentence]\n\n"
             "ENGLISH ASSESSMENT\n"
-            "Grammar: [Score]/100\n"
-            "Vocabulary: [Score]/100\n"
-            "Fluency: [Score]/100\n"
-            "Pronunciation Likelihood: [Score]/100\n"
-            "Overall Score: [Score]/100\n"
+            "Grammar: [Grade]\n"
+            "Vocabulary: [Grade]\n"
+            "Fluency: [Grade]\n"
+            "Pronunciation Likelihood: [Grade]\n"
+            "Overall Score: [Grade]\n"
             "Level: [Level]\n\n"
             "PERSONALIZED IMPROVEMENT PLAN\n"
             "Grammar:\n- [Item 1]\n- [Item 2]\n- [Item 3]\n"
